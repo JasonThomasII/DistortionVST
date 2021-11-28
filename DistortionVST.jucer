@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="aKis3c" name="DistortionVST" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              cppLanguageStandard="latest" companyName="K3lloVST" pluginChannelConfigs="{1,1}, {2,2}"
+              pluginVST3Category="Distortion" pluginFormats="buildStandalone,buildVST3">
+  <MAINGROUP id="OV6PqW" name="DistortionVST">
+    <GROUP id="{47929A71-46F9-DF8F-30F9-623EFF6869BF}" name="Source">
+      <FILE id="AY5mQK" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="aTgh3B" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="lsinSZ" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="yHLvnm" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <VS2019 targetFolder="Builds/VisualStudio2019">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="DistortionVST"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="DistortionVST"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_opengl" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_osc" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_video" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_product_unlocking" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_cryptography" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+      </MODULEPATHS>
+    </VS2019>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="0"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_cryptography" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_product_unlocking" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="0"/>
+    <MODULE id="juce_video" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+  </MODULES>
+</JUCERPROJECT>
