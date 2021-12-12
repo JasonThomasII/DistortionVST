@@ -179,8 +179,8 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
 
             *channelData *= drive * range;
 
-            //distortaion formula
-            *channelData = ((((2.f / float_Pi) * atan(*channelData) * blend) + (cleanSig * (1.f/ blend))) /2)* volume;
+            //distortaion formula                                              //Readd clean single
+            *channelData = ((((2.f / float_Pi) * atan(*channelData) * blend) + (cleanSig * (1.f/ blend))) /2) * volume;
 
             channelData++;
         }
