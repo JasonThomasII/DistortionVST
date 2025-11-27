@@ -1,0 +1,42 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Standalone (Debug)",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "cd ${workspaceFolder} && ./build.sh debug"
+            ],
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Build Standalone (Release)",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "cd ${workspaceFolder} && ./build.sh release"
+            ],
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "Clean Build",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "cd ${workspaceFolder} && rm -rf build && mkdir build"
+            ]
+        }
+    ]
+}

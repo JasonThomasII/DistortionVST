@@ -27,16 +27,15 @@ public:
     void resized() override;
 
 private:
-    ScopedPointer<Slider> driveKnob;
-    ScopedPointer<Slider> rangeKnob;
-    ScopedPointer<Slider> blendKnob;
-    ScopedPointer<Slider> volumeKnob;
+    std::unique_ptr<Slider> driveKnob;
+    std::unique_ptr<Slider> rangeKnob;
+    std::unique_ptr<Slider> blendKnob;
+    std::unique_ptr<Slider> volumeKnob;
 
-
-    ScopedPointer<AudioProcessorValueTreeState::SliderAttachment> driveAttachment;
-    ScopedPointer < AudioProcessorValueTreeState::SliderAttachment> rangeAttachment;
-    ScopedPointer < AudioProcessorValueTreeState::SliderAttachment> blendAttachment;
-    ScopedPointer < AudioProcessorValueTreeState::SliderAttachment> volumeAttachment;
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> driveAttachment;
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> rangeAttachment;
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> blendAttachment;
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> volumeAttachment;
 
 
     DistortionVSTAudioProcessor& audioProcessor;

@@ -28,5 +28,22 @@
 
 # Executables
 *.exe
+
+# Build directories
+build/
+cmake-build-debug/
+cmake-build-release/
+DerivedData/
+Builds/
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+
+# IDE
+.vscode/settings.json
+.DS_Store
+Thumbs.db
 *.out
 *.app

@@ -19,33 +19,35 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
 
 
     //Drive Knob
-    addAndMakeVisible(driveKnob = new Slider("Drive"));
+    driveKnob = std::make_unique<Slider>("Drive");
     driveKnob->setSliderStyle(Slider::Rotary);
     driveKnob->setTextBoxStyle(Slider::NoTextBox, false, 50, 50);
+    addAndMakeVisible(*driveKnob);
 
     //Range Knob
-    addAndMakeVisible(rangeKnob = new  Slider("Range"));
+    rangeKnob = std::make_unique<Slider>("Range");
     rangeKnob->setSliderStyle(Slider::Rotary);
     rangeKnob->setRange(0.0f, 1.0f);
     rangeKnob->setTextBoxStyle(Slider::NoTextBox, false, 50,50);
+    addAndMakeVisible(*rangeKnob);
 
-    //Blend Knnob
-    addAndMakeVisible(blendKnob = new Slider("Blend"));
+    //Blend Knob
+    blendKnob = std::make_unique<Slider>("Blend");
     blendKnob->setSliderStyle(Slider::Rotary);
     blendKnob->setTextBoxStyle(Slider::NoTextBox, false, 50,50);
+    addAndMakeVisible(*blendKnob);
 
     //Volume Knob
-    addAndMakeVisible(volumeKnob = new Slider("Volume"));
+    volumeKnob = std::make_unique<Slider>("Volume");
     volumeKnob->setSliderStyle(Slider::Rotary);
     volumeKnob->setTextBoxStyle(Slider::NoTextBox, false, 50, 50);
+    addAndMakeVisible(*volumeKnob);
 
-
-     
-    ////Attachments
-    driveAttachment = new AudioProcessorValueTreeState::SliderAttachment(p.getState(), "drive", *driveKnob);
-    rangeAttachment = new AudioProcessorValueTreeState::SliderAttachment(p.getState(), "range", *rangeKnob);
-    blendAttachment = new AudioProcessorValueTreeState::SliderAttachment(p.getState(), "blend", *blendKnob);
-    volumeAttachment = new AudioProcessorValueTreeState::SliderAttachment(p.getState(), "volume", *volumeKnob);
+    // Attachments
+    driveAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "drive", *driveKnob);
+    rangeAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "range", *rangeKnob);
+    blendAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "blend", *blendKnob);
+    volumeAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "volume", *volumeKnob);
 
 
 

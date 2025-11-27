@@ -17,6 +17,29 @@
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="DistortionVST"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="DistortionVST"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_plugin_client" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_osc" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_video" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_cryptography" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
     <VS2019 targetFolder="Builds/VisualStudio2019">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="DistortionVST"/>
