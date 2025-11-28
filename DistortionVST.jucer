@@ -7,9 +7,9 @@
   <MAINGROUP id="OV6PqW" name="DistortionVST">
     <GROUP id="{47929A71-46F9-DF8F-30F9-623EFF6869BF}" name="Source">
       <FILE id="AY5mQK" name="PluginProcessor.cpp" compile="1" resource="0"
-            file="Source/PluginProcessor.cpp"/>
+            file="Source/PluginProcessor.cpp" xcodeResource="0"/>
       <FILE id="aTgh3B" name="PluginProcessor.h" compile="0" resource="0"
-            file="Source/PluginProcessor.h"/>
+            file="Source/PluginProcessor.h" xcodeResource="0"/>
       <FILE id="lsinSZ" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="yHLvnm" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
@@ -65,6 +65,31 @@
         <MODULEPATH id="juce_audio_devices" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
       </MODULEPATHS>
     </VS2019>
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug"/>
+        <CONFIGURATION isDebug="0" name="Release"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_cryptography" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_opengl" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_osc" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_product_unlocking" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_video" path="../../../../../../JUCE/juce-6.1.2-windows/JUCE/modules"/>
+      </MODULEPATHS>
+    </VS2022>
   </EXPORTFORMATS>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
