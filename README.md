@@ -42,11 +42,21 @@ The easiest way to build is using the provided build script:
 
 ```bash
 cd /path/to/DistortionVST
-./build.sh debug        # Build debug version
-./build.sh release      # Build release version (optimized)
+
+# Build Standalone Application
+./build.sh debug                 # Debug version (default)
+./build.sh release               # Release version (optimized)
+./build.sh debug standalone      # Explicit standalone build
+./build.sh release standalone    # Release standalone
+
+# Build VST3 Plugin
+./build.sh debug vst3            # VST3 debug build
+./build.sh release vst3          # VST3 release build (optimized)
 ```
 
-The built application will be created at: `./dist/DistortionVST.app`
+**Output locations:**
+- Standalone: `./dist/DistortionVST.app`
+- VST3 Plugin: `./dist/DistortionVST.vst3` (copy this to `~/Library/Audio/Plug-Ins/VST3/` to use in DAWs on MacOS)
 
 #### Building in Xcode IDE
 
@@ -72,21 +82,41 @@ If using VS Code, you can build using the configured tasks:
 
 ### Running the Application
 
-After building, you can run the application in several ways:
+#### Standalone Application
 
-#### From Command Line
+After building the standalone version, you can run the application in several ways:
+
+##### From Command Line
 
 ```bash
 open ./dist/DistortionVST.app
 ```
 
-#### From Finder
+##### From Finder
 
 Navigate to the `dist` folder and double-click `DistortionVST.app`
 
-#### From Xcode
+##### From Xcode
 
 Build using the "DistortionVST - Standalone Plugin" scheme and press `Cmd + R`
+
+#### VST3 Plugin
+
+After building the VST3 version, you need to install it to use in your DAW:
+
+1. Build the VST3 plugin:
+   ```bash
+   ./build.sh release vst3
+   ```
+
+2. Copy to the VST3 plugins directory:
+   ```bash
+   cp -r ./dist/DistortionVST.vst3 ~/Library/Audio/Plug-Ins/VST3/
+   ```
+
+3. Restart your DAW (Digital Audio Workstation) - it should now recognize the plugin
+
+**Supported DAWs:** Any DAW that supports VST3 on macOS (Logic Pro, Ableton Live, Reaper, Cubase, etc.)
 
 ### Output Location
 
