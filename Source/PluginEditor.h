@@ -31,12 +31,13 @@ private:
     std::unique_ptr<Slider> rangeKnob;
     std::unique_ptr<Slider> blendKnob;
     std::unique_ptr<Slider> volumeKnob;
+    std::unique_ptr<Slider> reverbKnob;
 
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> driveAttachment;
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> rangeAttachment;
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> blendAttachment;
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> volumeAttachment;
-
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> reverbAttachment;
 
     DistortionVSTAudioProcessor& audioProcessor;
 

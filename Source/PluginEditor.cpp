@@ -43,16 +43,21 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     volumeKnob->setTextBoxStyle(Slider::NoTextBox, false, 50, 50);
     addAndMakeVisible(*volumeKnob);
 
+    //Reverb Knob
+    reverbKnob = std::make_unique<Slider>("Reverb");
+    reverbKnob->setSliderStyle(Slider::Rotary);
+    reverbKnob->setTextBoxStyle(Slider::NoTextBox, false, 50, 50);
+    addAndMakeVisible(*reverbKnob);
+
     // Attachments
     driveAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "drive", *driveKnob);
     rangeAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "range", *rangeKnob);
     blendAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "blend", *blendKnob);
     volumeAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "volume", *volumeKnob);
-
-
+    reverbAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "reverb", *reverbKnob);
 
     //Canvus
-    setSize (500 , 200);
+    setSize (500 , 350);
 }
 
 DistortionVSTAudioProcessorEditor::~DistortionVSTAudioProcessorEditor()
@@ -68,19 +73,21 @@ void DistortionVSTAudioProcessorEditor::paint (Graphics& g)
     g.setColour(Colours::white);
     g.setFont(15.0f);
    
-    g.drawText("Drive", ((getWidth() / 5) * 1) - (100 / 2), (getHeight() / 2) +5, 100 , 100, Justification::centred, false );
-    g.drawText("Range", ((getWidth() / 5) * 2) - (100 / 2), (getHeight() / 2) + 5, 100, 100, Justification::centred, false);
-    g.drawText("Blend", ((getWidth() / 5) * 3) - (100 / 2), (getHeight() / 2) + 5, 100, 100, Justification::centred, false);
-    g.drawText("Volume", ((getWidth() / 5) * 4) - (100 / 2), (getHeight() / 2) + 5, 100, 100, Justification::centred, false);
-
+    // Draw knob labels below their corresponding knobs
+    // Each label uses the same X position as its knob and Y position of knob + 105 pixels
+    g.drawText("Drive", ((getWidth() / 5) * 1) - (100 / 2), (getHeight() / 3) - (200 / 2) + 105, 100 , 100, Justification::centred, false );
+    g.drawText("Range", ((getWidth() / 5) * 2) - (100 / 2), (getHeight() / 3) - (200 / 2) + 105, 100, 100, Justification::centred, false);
+    g.drawText("Blend", ((getWidth() / 5) * 3) - (100 / 2), (getHeight() / 3) - (200 / 2) + 105, 100, 100, Justification::centred, false);
+    g.drawText("Volume", ((getWidth() / 5) * 4) - (100 / 2), (getHeight() / 3) - (200 / 2) + 105, 100, 100, Justification::centred, false);
+    g.drawText("Reverb", ((getWidth() / 2) - (100 / 2)), (getHeight() * 2 / 3) - (200 / 2) + 105, 100, 100, Justification::centred, false);
 
 }
 
 void DistortionVSTAudioProcessorEditor::resized()
 {
-    driveKnob->setBounds(((getWidth() / 5) * 1) - (100 / 2), (getHeight()/2) - (100/2), 100,100);
-    rangeKnob->setBounds(((getWidth() / 5) * 2) - (100 / 2), (getHeight() / 2) - (100 / 2), 100, 100);
-    blendKnob->setBounds(((getWidth() / 5) * 3) - (100 / 2), (getHeight() / 2) - (100 / 2), 100, 100);
-    volumeKnob->setBounds(((getWidth() / 5) * 4) - (100 / 2), (getHeight() / 2) - (100 / 2), 100, 100);
-
+    driveKnob->setBounds(((getWidth() / 5) * 1) - (100 / 2), (getHeight() / 3) - (100 / 2), 100, 100);
+    rangeKnob->setBounds(((getWidth() / 5) * 2) - (100 / 2), (getHeight() / 3) - (100 / 2), 100, 100);
+    blendKnob->setBounds(((getWidth() / 5) * 3) - (100 / 2), (getHeight() / 3) - (100 / 2), 100, 100);
+    volumeKnob->setBounds(((getWidth() / 5) * 4) - (100 / 2), (getHeight() / 3) - (100 / 2), 100, 100);
+    reverbKnob->setBounds(((getWidth() / 2) - (100 / 2)), (getHeight() * 2 / 3) - (100 / 2), 100, 100);
 }

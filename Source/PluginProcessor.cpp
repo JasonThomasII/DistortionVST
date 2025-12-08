@@ -29,11 +29,13 @@ DistortionVSTAudioProcessor::DistortionVSTAudioProcessor()
     state->createAndAddParameter("range", "Range", "Range", NormalisableRange<float>(0.0f, 3000.0f, 0.001f), 1, nullptr, nullptr);
     state->createAndAddParameter("blend", "Blend", "Blend", NormalisableRange<float>(0.0f, 1.0f, 0.001f), 1, nullptr, nullptr);
     state->createAndAddParameter("volume", "Volume", "Volume", NormalisableRange<float>(0.0f, 3.0f, 0.001f), 1, nullptr, nullptr);
+    state->createAndAddParameter("reverb", "Reverb", "Reverb", NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.2f, nullptr, nullptr);
 
     state->state = ValueTree("drive");
     state->state = ValueTree("range");
     state->state = ValueTree("blend");
     state->state = ValueTree("volume");
+    state->state = ValueTree("reverb");
 
 
 }
@@ -107,8 +109,15 @@ void DistortionVSTAudioProcessor::changeProgramName (int index, const String& ne
 //==============================================================================
 void DistortionVSTAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    // Reverb setup
+    reverbParams.roomSize  = 0.6f;
+    reverbParams.damping   = 0.4f;
+    reverbParams.width     = 1.0f;
+    reverbParams.wetLevel  = 0.3f;   // starting wet amount
+    reverbParams.dryLevel  = 0.7f;
+
+    reverb.setParameters(reverbParams);
+    reverb.setSampleRate(sampleRate);
 }
 
 void DistortionVSTAudioProcessor::releaseResources()
@@ -149,42 +158,50 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+    auto reverbParams = reverb.getParameters();
+
+
     // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
     float drive = *state->getRawParameterValue("drive");
     float range = *state->getRawParameterValue("range");
     float blend = *state->getRawParameterValue("blend");
     float volume = *state->getRawParameterValue("volume");
+    float reverbAmount = *state->getRawParameterValue("reverb");
 
+    reverbParams.wetLevel = reverbAmount;
+    reverbParams.dryLevel = 1.0f - reverbAmount;
+    reverb.setParameters(reverbParams);
 
+    // Apply distortion effect
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
         for (int sample = 0; sample < buffer.getNumSamples(); sample++) {
-        
+            
             float cleanSig = *channelData;
-
+            
             *channelData *= drive * range;
-
-            //distortaion formula                                              //Readd clean single
+            
+            //Distortion formula                                              //Read clean single
             *channelData = ((((2.f / float_Pi) * atan(*channelData) * blend) + (cleanSig * (1.f/ blend))) /2) * volume;
-
+            
             channelData++;
         }
-
+        
+    }
+    
+if (buffer.getNumChannels() >= 2)
+    {
+        reverb.processStereo(buffer.getWritePointer(0),
+                            buffer.getWritePointer(1),
+                            buffer.getNumSamples());
+    }
+else
+    {
+        reverb.processMono(buffer.getWritePointer(0),
+                        buffer.getNumSamples());
     }
 }
 
