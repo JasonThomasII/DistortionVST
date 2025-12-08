@@ -140,21 +140,6 @@ rm -rf build/
 
 Or use the VS Code task: "Clean Build"
 
-### Modifying the Project
-
-If you need to modify the project structure or add new files:
-
-1. Open the project in Projucer:
-   ```bash
-   /path/to/Projucer DistortionVST.jucer
-   ```
-
-2. Make your changes in Projucer
-
-3. Export/regenerate the Xcode project
-
-4. Rebuild using one of the methods above
-
 ### Troubleshooting
 
 **Build fails with "scheme not found"**
@@ -164,9 +149,3 @@ If you need to modify the project structure or add new files:
 **JUCE not found**
 - Verify JUCE is installed at `~/Documents/JUCE`
 - Update the path in the Xcode project if your JUCE installation is elsewhere
-
-**Permission denied on build.sh**
-- Make the script executable: `chmod +x build.sh`
-
-**Deprecation warnings during build**
-- These are expected and come from older JUCE APIs. The project still builds and runs correctly.
