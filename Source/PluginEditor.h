@@ -21,6 +21,7 @@ public:
         g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
         g.setColour(Colours::white);
         g.setFont(12.0f);
+        g.drawText("Distortion Type", 20, 10, 200, 20, Justification::centredLeft, false);
         g.drawText("Drive", 20, 130, 100, 20, Justification::centred, false);
         g.drawText("Range", 140, 130, 100, 20, Justification::centred, false);
         g.drawText("Blend", 260, 130, 100, 20, Justification::centred, false);
@@ -110,6 +111,9 @@ private:
     std::unique_ptr<Slider> volumeKnob;
     std::unique_ptr<Slider> reverbKnob;
     
+    // Distortion Type Selector
+    std::unique_ptr<ComboBox> distortionTypeCombo;
+    
     // EQ Sliders
     std::unique_ptr<Slider> lowGainSlider;
     std::unique_ptr<Slider> lowMidGainSlider;
@@ -134,6 +138,9 @@ private:
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> blendAttachment;
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> volumeAttachment;
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> reverbAttachment;
+    
+    // Distortion Type Attachment
+    std::unique_ptr<AudioProcessorValueTreeState::ComboBoxAttachment> distortionTypeAttachment;
     
     // EQ Attachments
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> lowGainAttachment;

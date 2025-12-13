@@ -57,6 +57,21 @@ public:
     juce::AudioProcessorValueTreeState& getState();
     
     void updateEQFilters(double sampleRate);
+    
+    // Distortion type enum
+    enum DistortionType {
+        AtanClip = 0,
+        Tanh = 1,
+        SoftKnee = 2,
+        AsymmetricClip = 3
+    };
+    
+    // Distortion function dispatcher
+    float applyDistortion(float input, DistortionType type, float drive, float range);
+    float atanDistortion(float x);
+    float tanhDistortion(float x);
+    float softKneeDistortion(float x);
+    float asymmetricDistortion(float x);
 
 
 private:

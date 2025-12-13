@@ -39,6 +39,17 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
 
     // === DISTORTION TAB SETUP ===
     
+    // Distortion Type ComboBox
+    distortionTypeCombo = std::make_unique<ComboBox>("Distortion Type");
+    distortionTypeCombo->addItem("Atan", 1);
+    distortionTypeCombo->addItem("Tanh", 2);
+    distortionTypeCombo->addItem("Soft Knee", 3);
+    distortionTypeCombo->addItem("Asymmetric", 4);
+    distortionTypeCombo->setSelectedItemIndex(0);
+    distortionTypeCombo->setColour(ComboBox::backgroundColourId, Colours::darkgrey);
+    distortionTypeCombo->setColour(ComboBox::textColourId, Colours::white);
+    distortionTab->addAndMakeVisible(*distortionTypeCombo);
+    
     //Drive Knob
     driveKnob = std::make_unique<Slider>("Drive");
     driveKnob->setSliderStyle(Slider::Rotary);
@@ -137,6 +148,9 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     volumeAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "volume", *volumeKnob);
     reverbAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "reverb", *reverbKnob);
     
+    // Distortion Type Attachment
+    distortionTypeAttachment = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(p.getState(), "distortionType", *distortionTypeCombo);
+    
     // EQ Attachments
     lowGainAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "lowGain", *lowGainSlider);
     lowMidGainAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "lowMidGain", *lowMidGainSlider);
@@ -173,12 +187,15 @@ void DistortionVSTAudioProcessorEditor::resized()
     auto contentBounds = tabbedComponent->getLocalBounds();
     
     // === DISTORTION TAB LAYOUT ===
+    // Position distortion type selector
+    distortionTypeCombo->setBounds(contentBounds.withX(20).withY(10).withWidth(200).withHeight(25));
+    
     // Position knobs on distortion tab
-    driveKnob->setBounds(contentBounds.withX(20).withY(20).withWidth(100).withHeight(100));
-    rangeKnob->setBounds(contentBounds.withX(140).withY(20).withWidth(100).withHeight(100));
-    blendKnob->setBounds(contentBounds.withX(260).withY(20).withWidth(100).withHeight(100));
-    volumeKnob->setBounds(contentBounds.withX(80).withY(150).withWidth(100).withHeight(100));
-    reverbKnob->setBounds(contentBounds.withX(240).withY(150).withWidth(100).withHeight(100));
+    driveKnob->setBounds(contentBounds.withX(20).withY(50).withWidth(100).withHeight(100));
+    rangeKnob->setBounds(contentBounds.withX(140).withY(50).withWidth(100).withHeight(100));
+    blendKnob->setBounds(contentBounds.withX(260).withY(50).withWidth(100).withHeight(100));
+    volumeKnob->setBounds(contentBounds.withX(80).withY(180).withWidth(100).withHeight(100));
+    reverbKnob->setBounds(contentBounds.withX(240).withY(180).withWidth(100).withHeight(100));
     
     // === EQ TAB LAYOUT ===
     // Position EQ sliders on EQ tab with better spacing (taller to accommodate text boxes)

@@ -46,6 +46,9 @@ DistortionVSTAudioProcessor::DistortionVSTAudioProcessor()
     state->createAndAddParameter("gateThreshold", "Gate Threshold", "Gate Threshold", NormalisableRange<float>(-80.0f, 0.0f, 0.1f), -40.0f, floatToString, stringToFloat);
     state->createAndAddParameter("gateAttack", "Gate Attack", "Gate Attack", NormalisableRange<float>(0.1f, 100.0f, 0.1f), 1.0f, floatToString, stringToFloat);
     state->createAndAddParameter("gateRelease", "Gate Release", "Gate Release", NormalisableRange<float>(10.0f, 1000.0f, 1.0f), 100.0f, floatToString, stringToFloat);
+    
+    // Distortion Type Parameter
+    state->createAndAddParameter("distortionType", "Distortion Type", "Distortion Type", NormalisableRange<float>(0.0f, 3.0f, 1.0f), 0.0f, floatToString, stringToFloat);
 
     state->state = ValueTree("drive");
     state->state = ValueTree("range");
@@ -258,8 +261,15 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
             // Clamp blend to avoid division by zero
             float clampedBlend = juce::jlimit(0.001f, 0.999f, blend);
             
-            //Distortion formula - mix between distorted and clean signal
-            *channelData = ((((2.f / juce::MathConstants<float>::pi) * atan(*channelData) * clampedBlend) + (cleanSig * (1.f - clampedBlend))) / 2.f) * volume;
+            // Get distortion type parameter
+            int distortionTypeParam = (int)(*state->getRawParameterValue("distortionType"));
+            DistortionType distortionType = static_cast<DistortionType>(distortionTypeParam);
+            
+            // Apply selected distortion
+            float distorted = applyDistortion(*channelData, distortionType, drive, range);
+            
+            // Mix between distorted and clean signal
+            *channelData = (distorted * clampedBlend + cleanSig * (1.f - clampedBlend)) * volume;
             
             channelData++;
         }
@@ -364,4 +374,72 @@ void DistortionVSTAudioProcessor::setStateInformation (const void* data, int siz
 AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new DistortionVSTAudioProcessor();
+}
+
+//==============================================================================
+// Distortion function implementations
+
+float DistortionVSTAudioProcessor::applyDistortion(float input, DistortionType type, float drive, float range)
+{
+    switch (type) {
+        case AtanClip:
+            return atanDistortion(input);
+        case Tanh:
+            return tanhDistortion(input);
+        case SoftKnee:
+            return softKneeDistortion(input);
+        case AsymmetricClip:
+            return asymmetricDistortion(input);
+        default:
+            return atanDistortion(input);
+    }
+}
+
+float DistortionVSTAudioProcessor::atanDistortion(float x)
+{
+    // Atan distortion - smooth, classic soft clipping
+    // Normalize output to match other algorithms
+    return (2.f / juce::MathConstants<float>::pi) * std::atan(x) * 0.7f;
+}
+
+float DistortionVSTAudioProcessor::tanhDistortion(float x)
+{
+    // tanh provides smooth, musical saturation
+    // Normalize output to roughly match atan range
+    return std::tanh(x) * 0.7f;
+}
+
+float DistortionVSTAudioProcessor::softKneeDistortion(float x)
+{
+    // Soft knee clipping with smooth transition
+    // More aggressive than tanh, with a defined knee region
+    float knee = 0.5f;
+    float absX = std::abs(x);
+    
+    if (absX < knee) {
+        // Linear region
+        return x;
+    } else if (absX < 2.0f * knee) {
+        // Soft knee transition
+        float t = (absX - knee) / knee;
+        float saturation = knee + (knee * t * t) / 2.0f;
+        return (x / absX) * saturation;
+    } else {
+        // Hard saturation
+        return (x / absX) * 1.0f;
+    }
+}
+
+float DistortionVSTAudioProcessor::asymmetricDistortion(float x)
+{
+    // Asymmetric distortion - different behavior for positive vs negative
+    // Instrument-like tone
+    if (x >= 0.0f) {
+        // Positive peaks clip more smoothly
+        return x / (1.0f + x * x);
+    } else {
+        // Negative peaks clip harder for asymmetry
+        float absX = std::abs(x);
+        return -(absX / (1.0f + absX * 1.5f));
+    }
 }
