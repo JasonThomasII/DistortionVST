@@ -38,6 +38,7 @@
         <MODULEPATH id="juce_audio_utils" path="/Users/jasonthomas/Documents/JUCE/modules"/>
         <MODULEPATH id="juce_audio_formats" path="/Users/jasonthomas/Documents/JUCE/modules"/>
         <MODULEPATH id="juce_audio_devices" path="/Users/jasonthomas/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="/Users/jasonthomas/Documents/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <VS2019 targetFolder="Builds/VisualStudio2019">
@@ -102,6 +103,7 @@
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_cryptography" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>

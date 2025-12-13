@@ -30,6 +30,13 @@ DistortionVSTAudioProcessor::DistortionVSTAudioProcessor()
     state->createAndAddParameter("blend", "Blend", "Blend", NormalisableRange<float>(0.0f, 1.0f, 0.001f), 1, nullptr, nullptr);
     state->createAndAddParameter("volume", "Volume", "Volume", NormalisableRange<float>(0.0f, 3.0f, 0.001f), 1, nullptr, nullptr);
     state->createAndAddParameter("reverb", "Reverb", "Reverb", NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.2f, nullptr, nullptr);
+    
+    // EQ Parameters
+    state->createAndAddParameter("lowGain", "Low Gain", "Low Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
+    state->createAndAddParameter("lowMidGain", "Low Mid Gain", "Low Mid Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
+    state->createAndAddParameter("midGain", "Mid Gain", "Mid Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
+    state->createAndAddParameter("highMidGain", "High Mid Gain", "High Mid Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
+    state->createAndAddParameter("highGain", "High Gain", "High Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
 
     state->state = ValueTree("drive");
     state->state = ValueTree("range");
@@ -118,6 +125,17 @@ void DistortionVSTAudioProcessor::prepareToPlay (double sampleRate, int samplesP
 
     reverb.setParameters(reverbParams);
     reverb.setSampleRate(sampleRate);
+    
+    // EQ setup
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = getTotalNumInputChannels();
+    
+    eqChain.prepare(spec);
+    
+    // Initialize filters with neutral settings
+    updateEQFilters(sampleRate);
 }
 
 void DistortionVSTAudioProcessor::releaseResources()
@@ -173,6 +191,9 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
     reverbParams.wetLevel = reverbAmount;
     reverbParams.dryLevel = 1.0f - reverbAmount;
     reverb.setParameters(reverbParams);
+    
+    // Update EQ settings
+    updateEQFilters(getSampleRate());
 
     // Apply distortion effect
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
@@ -192,6 +213,10 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
         
     }
     
+    // Apply EQ
+    juce::dsp::AudioBlock<float> block(buffer);
+    eqChain.process(juce::dsp::ProcessContextReplacing<float>(block));
+    
 if (buffer.getNumChannels() >= 2)
     {
         reverb.processStereo(buffer.getWritePointer(0),
@@ -208,6 +233,43 @@ else
 //GetState
 AudioProcessorValueTreeState& DistortionVSTAudioProcessor::getState() {
     return *state;
+}
+
+void DistortionVSTAudioProcessor::updateEQFilters(double sampleRate)
+{
+    float lowGain = state->getRawParameterValue("lowGain")->load();
+    float lowMidGain = state->getRawParameterValue("lowMidGain")->load();
+    float midGain = state->getRawParameterValue("midGain")->load();
+    float highMidGain = state->getRawParameterValue("highMidGain")->load();
+    float highGain = state->getRawParameterValue("highGain")->load();
+    
+    // Convert dB to linear
+    float lowGainLinear = juce::Decibels::decibelsToGain(lowGain);
+    float lowMidGainLinear = juce::Decibels::decibelsToGain(lowMidGain);
+    float midGainLinear = juce::Decibels::decibelsToGain(midGain);
+    float highMidGainLinear = juce::Decibels::decibelsToGain(highMidGain);
+    float highGainLinear = juce::Decibels::decibelsToGain(highGain);
+    
+    // Create filter coefficients for 5-band EQ
+    // Low-shelf filter at 60 Hz
+    auto& lowFilter = eqChain.get<0>();
+    lowFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeLowShelf(sampleRate, 60.0f, 0.707f, lowGainLinear);
+    
+    // Peaking filter at 250 Hz (low-mid)
+    auto& lowMidFilter = eqChain.get<1>();
+    lowMidFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, 250.0f, 0.707f, lowMidGainLinear);
+    
+    // Peaking filter at 1000 Hz (mid)
+    auto& midFilter = eqChain.get<2>();
+    midFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, 1000.0f, 0.707f, midGainLinear);
+    
+    // Peaking filter at 4000 Hz (high-mid)
+    auto& highMidFilter = eqChain.get<3>();
+    highMidFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, 4000.0f, 0.707f, highMidGainLinear);
+    
+    // High-shelf filter at 16000 Hz
+    auto& highFilter = eqChain.get<4>();
+    highFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, 16000.0f, 0.707f, highGainLinear);
 }
 
 

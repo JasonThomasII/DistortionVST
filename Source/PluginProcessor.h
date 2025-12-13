@@ -55,6 +55,8 @@ public:
 
     //Getters
     juce::AudioProcessorValueTreeState& getState();
+    
+    void updateEQFilters(double sampleRate);
 
 
 private:
@@ -62,6 +64,15 @@ private:
     juce::ScopedPointer<juce::AudioProcessorValueTreeState> state;
     juce::Reverb reverb;
     juce::Reverb::Parameters reverbParams;
+    
+    // 5-Band EQ Filters
+    juce::dsp::ProcessorChain<
+        juce::dsp::IIR::Filter<float>,  // Low-shelf (60 Hz)
+        juce::dsp::IIR::Filter<float>,  // Peaking (250 Hz)
+        juce::dsp::IIR::Filter<float>,  // Peaking (1000 Hz)
+        juce::dsp::IIR::Filter<float>,  // Peaking (4000 Hz)
+        juce::dsp::IIR::Filter<float>   // High-shelf (16000 Hz)
+    > eqChain;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DistortionVSTAudioProcessor)
 };
