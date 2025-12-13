@@ -74,6 +74,22 @@ public:
     TextButton resetButton;
 };
 
+// Custom tab component for Noise Gate
+class NoiseGateTabComponent : public Component
+{
+public:
+    void paint(Graphics& g) override
+    {
+        g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
+        g.setColour(Colours::white);
+        g.setFont(14.0f);
+        g.drawText("Gate Enable", 20, 30, 150, 25, Justification::centred, false);
+        g.drawText("Threshold", 20, 90, 150, 25, Justification::centred, false);
+        g.drawText("Attack (ms)", 20, 150, 150, 25, Justification::centred, false);
+        g.drawText("Release (ms)", 20, 210, 150, 25, Justification::centred, false);
+    }
+};
+
 //==============================================================================
 /**
 */
@@ -101,9 +117,16 @@ private:
     std::unique_ptr<Slider> highMidGainSlider;
     std::unique_ptr<Slider> highGainSlider;
     
+    // Noise Gate Controls
+    std::unique_ptr<ToggleButton> gateEnabledButton;
+    std::unique_ptr<Slider> gateThresholdSlider;
+    std::unique_ptr<Slider> gateAttackSlider;
+    std::unique_ptr<Slider> gateReleaseSlider;
+    
     // Tabbed interface components
     std::unique_ptr<DistortionTabComponent> distortionTab;
     std::unique_ptr<EQTabComponent> eqTab;
+    std::unique_ptr<NoiseGateTabComponent> noiseGateTab;
     std::unique_ptr<juce::TabbedComponent> tabbedComponent;
 
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> driveAttachment;
@@ -118,6 +141,12 @@ private:
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> midGainAttachment;
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> highMidGainAttachment;
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> highGainAttachment;
+    
+    // Noise Gate Attachments
+    std::unique_ptr<AudioProcessorValueTreeState::ButtonAttachment> gateEnabledAttachment;
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> gateThresholdAttachment;
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> gateAttackAttachment;
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> gateReleaseAttachment;
 
     DistortionVSTAudioProcessor& audioProcessor;
 

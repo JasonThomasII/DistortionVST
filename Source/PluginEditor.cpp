@@ -17,6 +17,7 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     // Create custom tab components
     distortionTab = std::make_unique<DistortionTabComponent>();
     eqTab = std::make_unique<EQTabComponent>();
+    noiseGateTab = std::make_unique<NoiseGateTabComponent>();
     
     // Add reset button listener
     eqTab->resetButton.onClick = [this]()
@@ -33,6 +34,7 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     tabbedComponent = std::make_unique<juce::TabbedComponent>(juce::TabbedButtonBar::TabsAtTop);
     tabbedComponent->addTab("Distortion", juce::Colours::darkgrey, distortionTab.get(), false);
     tabbedComponent->addTab("EQ", juce::Colours::darkgrey, eqTab.get(), false);
+    tabbedComponent->addTab("Noise Gate", juce::Colours::darkgrey, noiseGateTab.get(), false);
     addAndMakeVisible(*tabbedComponent);
 
     // === DISTORTION TAB SETUP ===
@@ -73,33 +75,60 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     // EQ Sliders (5-Band EQ)
     lowGainSlider = std::make_unique<Slider>("Low Gain");
     lowGainSlider->setSliderStyle(Slider::LinearVertical);
-    lowGainSlider->setTextBoxStyle(Slider::NoTextBox, false, 50, 50);
+    lowGainSlider->setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
     lowGainSlider->setRange(-12.0f, 12.0f, 0.1f);
     eqTab->addAndMakeVisible(*lowGainSlider);
     
     lowMidGainSlider = std::make_unique<Slider>("Low Mid Gain");
     lowMidGainSlider->setSliderStyle(Slider::LinearVertical);
-    lowMidGainSlider->setTextBoxStyle(Slider::NoTextBox, false, 50, 50);
+    lowMidGainSlider->setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
     lowMidGainSlider->setRange(-12.0f, 12.0f, 0.1f);
     eqTab->addAndMakeVisible(*lowMidGainSlider);
     
     midGainSlider = std::make_unique<Slider>("Mid Gain");
     midGainSlider->setSliderStyle(Slider::LinearVertical);
-    midGainSlider->setTextBoxStyle(Slider::NoTextBox, false, 50, 50);
+    midGainSlider->setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
     midGainSlider->setRange(-12.0f, 12.0f, 0.1f);
     eqTab->addAndMakeVisible(*midGainSlider);
     
     highMidGainSlider = std::make_unique<Slider>("High Mid Gain");
     highMidGainSlider->setSliderStyle(Slider::LinearVertical);
-    highMidGainSlider->setTextBoxStyle(Slider::NoTextBox, false, 50, 50);
+    highMidGainSlider->setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
     highMidGainSlider->setRange(-12.0f, 12.0f, 0.1f);
     eqTab->addAndMakeVisible(*highMidGainSlider);
     
     highGainSlider = std::make_unique<Slider>("High Gain");
     highGainSlider->setSliderStyle(Slider::LinearVertical);
-    highGainSlider->setTextBoxStyle(Slider::NoTextBox, false, 50, 50);
+    highGainSlider->setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
     highGainSlider->setRange(-12.0f, 12.0f, 0.1f);
     eqTab->addAndMakeVisible(*highGainSlider);
+
+    // === NOISE GATE TAB SETUP ===
+    
+    // Gate Enable Toggle Button
+    gateEnabledButton = std::make_unique<ToggleButton>("Enable");
+    noiseGateTab->addAndMakeVisible(*gateEnabledButton);
+    
+    // Gate Threshold Slider
+    gateThresholdSlider = std::make_unique<Slider>("Gate Threshold");
+    gateThresholdSlider->setSliderStyle(Slider::LinearHorizontal);
+    gateThresholdSlider->setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
+    gateThresholdSlider->setRange(-80.0f, 0.0f, 0.1f);
+    noiseGateTab->addAndMakeVisible(*gateThresholdSlider);
+    
+    // Gate Attack Slider
+    gateAttackSlider = std::make_unique<Slider>("Gate Attack");
+    gateAttackSlider->setSliderStyle(Slider::LinearHorizontal);
+    gateAttackSlider->setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
+    gateAttackSlider->setRange(0.1f, 100.0f, 0.1f);
+    noiseGateTab->addAndMakeVisible(*gateAttackSlider);
+    
+    // Gate Release Slider
+    gateReleaseSlider = std::make_unique<Slider>("Gate Release");
+    gateReleaseSlider->setSliderStyle(Slider::LinearHorizontal);
+    gateReleaseSlider->setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
+    gateReleaseSlider->setRange(10.0f, 1000.0f, 1.0f);
+    noiseGateTab->addAndMakeVisible(*gateReleaseSlider);
 
     // Attachments
     driveAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "drive", *driveKnob);
@@ -114,6 +143,12 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     midGainAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "midGain", *midGainSlider);
     highMidGainAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "highMidGain", *highMidGainSlider);
     highGainAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "highGain", *highGainSlider);
+    
+    // Noise Gate Attachments
+    gateEnabledAttachment = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(p.getState(), "gateEnabled", *gateEnabledButton);
+    gateThresholdAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "gateThreshold", *gateThresholdSlider);
+    gateAttackAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "gateAttack", *gateAttackSlider);
+    gateReleaseAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "gateRelease", *gateReleaseSlider);
 
     //Canvas
     setSize (500 , 350);
@@ -146,10 +181,17 @@ void DistortionVSTAudioProcessorEditor::resized()
     reverbKnob->setBounds(contentBounds.withX(240).withY(150).withWidth(100).withHeight(100));
     
     // === EQ TAB LAYOUT ===
-    // Position EQ sliders on EQ tab with better spacing
-    lowGainSlider->setBounds(contentBounds.withX(20).withY(40).withWidth(40).withHeight(150));
-    lowMidGainSlider->setBounds(contentBounds.withX(90).withY(40).withWidth(40).withHeight(150));
-    midGainSlider->setBounds(contentBounds.withX(160).withY(40).withWidth(40).withHeight(150));
-    highMidGainSlider->setBounds(contentBounds.withX(230).withY(40).withWidth(40).withHeight(150));
-    highGainSlider->setBounds(contentBounds.withX(300).withY(40).withWidth(40).withHeight(150));
+    // Position EQ sliders on EQ tab with better spacing (taller to accommodate text boxes)
+    lowGainSlider->setBounds(contentBounds.withX(20).withY(40).withWidth(40).withHeight(120));
+    lowMidGainSlider->setBounds(contentBounds.withX(90).withY(40).withWidth(40).withHeight(120));
+    midGainSlider->setBounds(contentBounds.withX(160).withY(40).withWidth(40).withHeight(120));
+    highMidGainSlider->setBounds(contentBounds.withX(230).withY(40).withWidth(40).withHeight(120));
+    highGainSlider->setBounds(contentBounds.withX(300).withY(40).withWidth(40).withHeight(120));
+    
+    // === NOISE GATE TAB LAYOUT ===
+    // Position noise gate controls
+    gateEnabledButton->setBounds(contentBounds.withX(30).withY(60).withWidth(150).withHeight(30));
+    gateThresholdSlider->setBounds(contentBounds.withX(50).withY(120).withWidth(250).withHeight(60));
+    gateAttackSlider->setBounds(contentBounds.withX(50).withY(180).withWidth(250).withHeight(60));
+    gateReleaseSlider->setBounds(contentBounds.withX(50).withY(240).withWidth(250).withHeight(60));
 }

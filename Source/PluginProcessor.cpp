@@ -24,19 +24,28 @@ DistortionVSTAudioProcessor::DistortionVSTAudioProcessor()
 #endif
 {
     state = new AudioProcessorValueTreeState(*this, nullptr);
+    
+    auto floatToString = [](float value) { return String(value, 2); };
+    auto stringToFloat = [](const String& str) { return str.getFloatValue(); };
         
-    state->createAndAddParameter("drive", "Drive","Drive",NormalisableRange<float>(0.0f, 1.0f, 0.001f),1,nullptr,nullptr);
-    state->createAndAddParameter("range", "Range", "Range", NormalisableRange<float>(0.0f, 3000.0f, 0.001f), 1, nullptr, nullptr);
-    state->createAndAddParameter("blend", "Blend", "Blend", NormalisableRange<float>(0.0f, 1.0f, 0.001f), 1, nullptr, nullptr);
-    state->createAndAddParameter("volume", "Volume", "Volume", NormalisableRange<float>(0.0f, 3.0f, 0.001f), 1, nullptr, nullptr);
-    state->createAndAddParameter("reverb", "Reverb", "Reverb", NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.2f, nullptr, nullptr);
+    state->createAndAddParameter("drive", "Drive","Drive",NormalisableRange<float>(0.0f, 1.0f, 0.001f),1,floatToString,stringToFloat);
+    state->createAndAddParameter("range", "Range", "Range", NormalisableRange<float>(0.0f, 3000.0f, 0.001f), 1, floatToString, stringToFloat);
+    state->createAndAddParameter("blend", "Blend", "Blend", NormalisableRange<float>(0.0f, 1.0f, 0.001f), 1, floatToString, stringToFloat);
+    state->createAndAddParameter("volume", "Volume", "Volume", NormalisableRange<float>(0.0f, 3.0f, 0.001f), 1, floatToString, stringToFloat);
+    state->createAndAddParameter("reverb", "Reverb", "Reverb", NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.2f, floatToString, stringToFloat);
     
     // EQ Parameters
-    state->createAndAddParameter("lowGain", "Low Gain", "Low Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
-    state->createAndAddParameter("lowMidGain", "Low Mid Gain", "Low Mid Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
-    state->createAndAddParameter("midGain", "Mid Gain", "Mid Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
-    state->createAndAddParameter("highMidGain", "High Mid Gain", "High Mid Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
-    state->createAndAddParameter("highGain", "High Gain", "High Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, nullptr, nullptr);
+    state->createAndAddParameter("lowGain", "Low Gain", "Low Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, floatToString, stringToFloat);
+    state->createAndAddParameter("lowMidGain", "Low Mid Gain", "Low Mid Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, floatToString, stringToFloat);
+    state->createAndAddParameter("midGain", "Mid Gain", "Mid Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, floatToString, stringToFloat);
+    state->createAndAddParameter("highMidGain", "High Mid Gain", "High Mid Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, floatToString, stringToFloat);
+    state->createAndAddParameter("highGain", "High Gain", "High Gain", NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f, floatToString, stringToFloat);
+    
+    // Noise Gate Parameters
+    state->createAndAddParameter("gateEnabled", "Gate Enabled", "Gate Enabled", NormalisableRange<float>(0.0f, 1.0f, 1.0f), 0.0f, floatToString, stringToFloat);
+    state->createAndAddParameter("gateThreshold", "Gate Threshold", "Gate Threshold", NormalisableRange<float>(-80.0f, 0.0f, 0.1f), -40.0f, floatToString, stringToFloat);
+    state->createAndAddParameter("gateAttack", "Gate Attack", "Gate Attack", NormalisableRange<float>(0.1f, 100.0f, 0.1f), 1.0f, floatToString, stringToFloat);
+    state->createAndAddParameter("gateRelease", "Gate Release", "Gate Release", NormalisableRange<float>(10.0f, 1000.0f, 1.0f), 100.0f, floatToString, stringToFloat);
 
     state->state = ValueTree("drive");
     state->state = ValueTree("range");
@@ -136,6 +145,10 @@ void DistortionVSTAudioProcessor::prepareToPlay (double sampleRate, int samplesP
     
     // Initialize filters with neutral settings
     updateEQFilters(sampleRate);
+    
+    // Initialize noise gate envelopes
+    gateEnvelope.clear();
+    gateEnvelope.resize(getTotalNumInputChannels(), 0.0f);
 }
 
 void DistortionVSTAudioProcessor::releaseResources()
@@ -187,6 +200,19 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
     float blend = *state->getRawParameterValue("blend");
     float volume = *state->getRawParameterValue("volume");
     float reverbAmount = *state->getRawParameterValue("reverb");
+    
+    // Noise Gate parameters
+    bool gateEnabled = *state->getRawParameterValue("gateEnabled") > 0.5f;
+    float gateThreshold = *state->getRawParameterValue("gateThreshold");
+    float gateAttackMs = *state->getRawParameterValue("gateAttack");
+    float gateReleaseMs = *state->getRawParameterValue("gateRelease");
+    
+    float thresholdLinear = juce::Decibels::decibelsToGain(gateThreshold);
+    
+    // Calculate attack and release coefficients (smoother envelope)
+    double sampleRate = getSampleRate();
+    float attackCoeff = std::exp(-2.0f * juce::MathConstants<float>::pi / (gateAttackMs * sampleRate * 0.001f));
+    float releaseCoeff = std::exp(-2.0f * juce::MathConstants<float>::pi / (gateReleaseMs * sampleRate * 0.001f));
 
     reverbParams.wetLevel = reverbAmount;
     reverbParams.dryLevel = 1.0f - reverbAmount;
@@ -201,12 +227,39 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
         auto* channelData = buffer.getWritePointer (channel);
         for (int sample = 0; sample < buffer.getNumSamples(); sample++) {
             
-            float cleanSig = *channelData;
+            float inputSample = *channelData;
             
-            *channelData *= drive * range;
+            // Noise Gate processing
+            if (gateEnabled && channel < (int)gateEnvelope.size())
+            {
+                float inputLevel = std::abs(inputSample);
+                
+                // Envelope follower with attack/release
+                if (inputLevel > gateEnvelope[channel])
+                {
+                    gateEnvelope[channel] = attackCoeff * gateEnvelope[channel] + (1.0f - attackCoeff) * inputLevel;
+                }
+                else
+                {
+                    gateEnvelope[channel] = releaseCoeff * gateEnvelope[channel] + (1.0f - releaseCoeff) * inputLevel;
+                }
+                
+                // Gate logic - mute if below threshold
+                if (gateEnvelope[channel] < thresholdLinear)
+                {
+                    inputSample = 0.0f;
+                }
+            }
             
-            //Distortion formula                                              //Read clean single
-            *channelData = ((((2.f / float_Pi) * atan(*channelData) * blend) + (cleanSig * (1.f/ blend))) /2) * volume;
+            float cleanSig = inputSample;
+            
+            *channelData = inputSample * drive * range;
+            
+            // Clamp blend to avoid division by zero
+            float clampedBlend = juce::jlimit(0.001f, 0.999f, blend);
+            
+            //Distortion formula - mix between distorted and clean signal
+            *channelData = ((((2.f / juce::MathConstants<float>::pi) * atan(*channelData) * clampedBlend) + (cleanSig * (1.f - clampedBlend))) / 2.f) * volume;
             
             channelData++;
         }

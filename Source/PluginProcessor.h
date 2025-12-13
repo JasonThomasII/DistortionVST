@@ -65,6 +65,9 @@ private:
     juce::Reverb reverb;
     juce::Reverb::Parameters reverbParams;
     
+    // Noise Gate state (per channel)
+    std::vector<float> gateEnvelope;
+    
     // 5-Band EQ Filters
     juce::dsp::ProcessorChain<
         juce::dsp::IIR::Filter<float>,  // Low-shelf (60 Hz)
