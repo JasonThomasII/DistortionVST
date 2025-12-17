@@ -149,6 +149,11 @@ void DistortionVSTAudioProcessor::prepareToPlay (double sampleRate, int samplesP
     // Initialize filters with neutral settings
     updateEQFilters(sampleRate);
     
+    // Initialize oversampling (4x for good aliasing reduction vs CPU trade-off)
+    // 2 = log2(4) means 4x oversampling
+    oversampler = std::make_unique<juce::dsp::Oversampling<float>>(getTotalNumInputChannels(), 2, juce::dsp::Oversampling<float>::FilterType::filterHalfBandFIREquiripple);
+    oversampler->initProcessing(samplesPerBlock);
+    
     // Initialize noise gate envelopes
     gateEnvelope.clear();
     gateEnvelope.resize(getTotalNumInputChannels(), 0.0f);
@@ -224,13 +229,29 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
     // Update EQ settings
     updateEQFilters(getSampleRate());
 
-    // Apply distortion effect
+    // Apply distortion effect with oversampling for better aliasing reduction
+    // Clamp blend to avoid division by zero
+    float clampedBlend = juce::jlimit(0.001f, 0.999f, blend);
+    
+    // Get distortion type parameter
+    int distortionTypeParam = (int)(*state->getRawParameterValue("distortionType"));
+    DistortionType distortionType = static_cast<DistortionType>(distortionTypeParam);
+    
+    // Create audio block for processing with oversampling
+    juce::dsp::AudioBlock<float> block(buffer);
+    
+    // Upsample all channels to 4x
+    auto oversampledBlock = oversampler->processSamplesUp(block);
+    
+    // Process at oversampled rate
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        auto* channelData = buffer.getWritePointer (channel);
-        for (int sample = 0; sample < buffer.getNumSamples(); sample++) {
-            
-            float inputSample = *channelData;
+        float* channelData = oversampledBlock.getChannelPointer(channel);
+        int oversampledNumSamples = (int)oversampledBlock.getNumSamples();
+        
+        for (int sample = 0; sample < oversampledNumSamples; ++sample)
+        {
+            float inputSample = channelData[sample];
             
             // Noise Gate processing
             if (gateEnabled && channel < (int)gateEnvelope.size())
@@ -255,30 +276,22 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
             }
             
             float cleanSig = inputSample;
+            float processedSample = inputSample * drive * range;
             
-            *channelData = inputSample * drive * range;
-            
-            // Clamp blend to avoid division by zero
-            float clampedBlend = juce::jlimit(0.001f, 0.999f, blend);
-            
-            // Get distortion type parameter
-            int distortionTypeParam = (int)(*state->getRawParameterValue("distortionType"));
-            DistortionType distortionType = static_cast<DistortionType>(distortionTypeParam);
-            
-            // Apply selected distortion
-            float distorted = applyDistortion(*channelData, distortionType, drive, range);
+            // Apply selected distortion at oversampled rate
+            float distorted = applyDistortion(processedSample, distortionType, drive, range);
             
             // Mix between distorted and clean signal
-            *channelData = (distorted * clampedBlend + cleanSig * (1.f - clampedBlend)) * volume;
-            
-            channelData++;
+            channelData[sample] = (distorted * clampedBlend + cleanSig * (1.f - clampedBlend)) * volume;
         }
-        
     }
     
+    // Downsample back to original rate
+    oversampler->processSamplesDown(block);
+    
     // Apply EQ
-    juce::dsp::AudioBlock<float> block(buffer);
-    eqChain.process(juce::dsp::ProcessContextReplacing<float>(block));
+    juce::dsp::AudioBlock<float> eqBlock(buffer);
+    eqChain.process(juce::dsp::ProcessContextReplacing<float>(eqBlock));
     
 if (buffer.getNumChannels() >= 2)
     {
