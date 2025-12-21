@@ -20,13 +20,14 @@ public:
     {
         g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
         g.setColour(Colours::white);
-        g.setFont(12.0f);
-        g.drawText("Distortion Type", 20, 10, 200, 20, Justification::centredLeft, false);
-        g.drawText("Drive", 20, 130, 100, 20, Justification::centred, false);
-        g.drawText("Range", 140, 130, 100, 20, Justification::centred, false);
-        g.drawText("Blend", 260, 130, 100, 20, Justification::centred, false);
-        g.drawText("Volume", 80, 260, 100, 20, Justification::centred, false);
-        g.drawText("Reverb", 240, 260, 100, 20, Justification::centred, false);
+        g.setFont(11.0f);
+        g.drawText("Distortion Type", 20, 30, 200, 40, Justification::centredLeft, false);
+        g.drawText("Oversampling", 240, 30, 150, 40, Justification::centredLeft, false);
+        g.drawText("Drive", 20, 190, 100, 20, Justification::centred, false);
+        g.drawText("Range", 140, 190, 100, 20, Justification::centred, false);
+        g.drawText("Blend", 260, 190, 100, 20, Justification::centred, false);
+        g.drawText("Volume", 80, 320, 100, 20, Justification::centred, false);
+        g.drawText("Reverb", 240, 320, 100, 20, Justification::centred, false);
     }
 };
 
@@ -48,23 +49,23 @@ public:
         g.setFont(12.0f);
         
         // Frequency labels at bottom
-        g.drawText("60Hz", 20, 200, 40, 20, Justification::centred, false);
-        g.drawText("250Hz", 90, 200, 40, 20, Justification::centred, false);
-        g.drawText("1kHz", 160, 200, 40, 20, Justification::centred, false);
-        g.drawText("4kHz", 230, 200, 40, 20, Justification::centred, false);
-        g.drawText("16kHz", 300, 200, 40, 20, Justification::centred, false);
+        g.drawText("60Hz", 20, 220, 40, 20, Justification::centred, false);
+        g.drawText("250Hz", 90, 220, 40, 20, Justification::centred, false);
+        g.drawText("1kHz", 160, 220, 40, 20, Justification::centred, false);
+        g.drawText("4kHz", 230, 220, 40, 20, Justification::centred, false);
+        g.drawText("16kHz", 300, 220, 40, 20, Justification::centred, false);
         
         // Legend on the left showing dB scale
         g.setFont(10.0f);
-        g.drawText("+12dB", 2, 40, 12, 15, Justification::centred, false);
-        g.drawText("0dB", 2, 105, 12, 15, Justification::centred, false);
-        g.drawText("-12dB", 2, 170, 12, 15, Justification::centred, false);
+        g.drawText("+12dB", 2, 80, 12, 15, Justification::centred, false);
+        g.drawText("0dB", 2, 145, 12, 15, Justification::centred, false);
+        g.drawText("-12dB", 2, 210, 12, 15, Justification::centred, false);
         
         // Draw reference lines on the legend
         g.setColour(Colours::grey);
-        g.drawLine(15, 47, 18, 47, 1.0f);   // +12dB line
-        g.drawLine(15, 112, 18, 112, 1.0f); // 0dB line
-        g.drawLine(15, 177, 18, 177, 1.0f); // -12dB line
+        g.drawLine(15, 88, 18, 88, 1.0f);   // +12dB line
+        g.drawLine(15, 153, 18, 153, 1.0f); // 0dB line
+        g.drawLine(15, 218, 18, 218, 1.0f); // -12dB line
     }
     
     void resized() override
@@ -85,7 +86,7 @@ public:
         g.setColour(Colours::white);
         g.setFont(14.0f);
         g.drawText("Gate Enable", 20, 30, 150, 25, Justification::centred, false);
-        g.drawText("Threshold", 20, 90, 150, 25, Justification::centred, false);
+        g.drawText("Threshold", 20, 130, 150, 25, Justification::centred, false);
         g.drawText("Attack (ms)", 20, 150, 150, 25, Justification::centred, false);
         g.drawText("Release (ms)", 20, 210, 150, 25, Justification::centred, false);
     }
@@ -114,6 +115,9 @@ private:
     // Distortion Type Selector
     std::unique_ptr<ComboBox> distortionTypeCombo;
     
+    // Oversampling Rate Selector
+    std::unique_ptr<ComboBox> oversamplingRateCombo;
+    
     // EQ Sliders
     std::unique_ptr<Slider> lowGainSlider;
     std::unique_ptr<Slider> lowMidGainSlider;
@@ -141,6 +145,9 @@ private:
     
     // Distortion Type Attachment
     std::unique_ptr<AudioProcessorValueTreeState::ComboBoxAttachment> distortionTypeAttachment;
+    
+    // Oversampling Rate Attachment
+    std::unique_ptr<AudioProcessorValueTreeState::ComboBoxAttachment> oversamplingRateAttachment;
     
     // EQ Attachments
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> lowGainAttachment;

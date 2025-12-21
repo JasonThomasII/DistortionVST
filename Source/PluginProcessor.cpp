@@ -49,6 +49,9 @@ DistortionVSTAudioProcessor::DistortionVSTAudioProcessor()
     
     // Distortion Type Parameter
     state->createAndAddParameter("distortionType", "Distortion Type", "Distortion Type", NormalisableRange<float>(0.0f, 3.0f, 1.0f), 0.0f, floatToString, stringToFloat);
+    
+    // Oversampling Rate Parameter (0=none, 1=2x, 2=4x, 3=8x)
+    state->createAndAddParameter("oversamplingRate", "Oversampling Rate", "Oversampling Rate", NormalisableRange<float>(0.0f, 3.0f, 1.0f), 2.0f, floatToString, stringToFloat);
 
     state->state = ValueTree("drive");
     state->state = ValueTree("range");
@@ -149,10 +152,17 @@ void DistortionVSTAudioProcessor::prepareToPlay (double sampleRate, int samplesP
     // Initialize filters with neutral settings
     updateEQFilters(sampleRate);
     
-    // Initialize oversampling (4x for good aliasing reduction vs CPU trade-off)
-    // 2 = log2(4) means 4x oversampling
-    oversampler = std::make_unique<juce::dsp::Oversampling<float>>(getTotalNumInputChannels(), 2, juce::dsp::Oversampling<float>::FilterType::filterHalfBandFIREquiripple);
-    oversampler->initProcessing(samplesPerBlock);
+    // Initialize oversampling with default 4x (factor 2)
+    // Get the oversampling rate parameter (0=none, 1=2x, 2=4x, 3=8x)
+    currentOversamplingFactor = (int)(*state->getRawParameterValue("oversamplingRate"));
+    if (currentOversamplingFactor == 0) {
+        // No oversampling
+        oversampler = nullptr;
+    } else {
+        // Create oversampler with the selected factor
+        oversampler = std::make_unique<juce::dsp::Oversampling<float>>(getTotalNumInputChannels(), currentOversamplingFactor, juce::dsp::Oversampling<float>::FilterType::filterHalfBandFIREquiripple);
+        oversampler->initProcessing(samplesPerBlock);
+    }
     
     // Initialize noise gate envelopes
     gateEnvelope.clear();
@@ -237,57 +247,114 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
     int distortionTypeParam = (int)(*state->getRawParameterValue("distortionType"));
     DistortionType distortionType = static_cast<DistortionType>(distortionTypeParam);
     
+    // Get current oversampling rate
+    int oversamplingRateParam = (int)(*state->getRawParameterValue("oversamplingRate"));
+    if (oversamplingRateParam != currentOversamplingFactor) {
+        // Oversampling rate has changed, need to reinitialize
+        currentOversamplingFactor = oversamplingRateParam;
+        prepareToPlay(getSampleRate(), getBlockSize());
+    }
+    
     // Create audio block for processing with oversampling
     juce::dsp::AudioBlock<float> block(buffer);
     
-    // Upsample all channels to 4x
-    auto oversampledBlock = oversampler->processSamplesUp(block);
-    
-    // Process at oversampled rate
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    // Process with or without oversampling based on current setting
+    if (oversampler != nullptr && currentOversamplingFactor > 0)
     {
-        float* channelData = oversampledBlock.getChannelPointer(channel);
-        int oversampledNumSamples = (int)oversampledBlock.getNumSamples();
+        // Upsample all channels
+        auto oversampledBlock = oversampler->processSamplesUp(block);
         
-        for (int sample = 0; sample < oversampledNumSamples; ++sample)
+        // Process at oversampled rate
+        for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
-            float inputSample = channelData[sample];
+            float* channelData = oversampledBlock.getChannelPointer(channel);
+            int oversampledNumSamples = (int)oversampledBlock.getNumSamples();
             
-            // Noise Gate processing
-            if (gateEnabled && channel < (int)gateEnvelope.size())
+            for (int sample = 0; sample < oversampledNumSamples; ++sample)
             {
-                float inputLevel = std::abs(inputSample);
+                float inputSample = channelData[sample];
                 
-                // Envelope follower with attack/release
-                if (inputLevel > gateEnvelope[channel])
+                // Noise Gate processing
+                if (gateEnabled && channel < (int)gateEnvelope.size())
                 {
-                    gateEnvelope[channel] = attackCoeff * gateEnvelope[channel] + (1.0f - attackCoeff) * inputLevel;
-                }
-                else
-                {
-                    gateEnvelope[channel] = releaseCoeff * gateEnvelope[channel] + (1.0f - releaseCoeff) * inputLevel;
+                    float inputLevel = std::abs(inputSample);
+                    
+                    // Envelope follower with attack/release
+                    if (inputLevel > gateEnvelope[channel])
+                    {
+                        gateEnvelope[channel] = attackCoeff * gateEnvelope[channel] + (1.0f - attackCoeff) * inputLevel;
+                    }
+                    else
+                    {
+                        gateEnvelope[channel] = releaseCoeff * gateEnvelope[channel] + (1.0f - releaseCoeff) * inputLevel;
+                    }
+                    
+                    // Gate logic - mute if below threshold
+                    if (gateEnvelope[channel] < thresholdLinear)
+                    {
+                        inputSample = 0.0f;
+                    }
                 }
                 
-                // Gate logic - mute if below threshold
-                if (gateEnvelope[channel] < thresholdLinear)
-                {
-                    inputSample = 0.0f;
-                }
+                float cleanSig = inputSample;
+                float processedSample = inputSample * drive * range;
+                
+                // Apply selected distortion at oversampled rate
+                float distorted = applyDistortion(processedSample, distortionType, drive, range);
+                
+                // Mix between distorted and clean signal
+                channelData[sample] = (distorted * clampedBlend + cleanSig * (1.f - clampedBlend)) * volume;
             }
+        }
+        
+        // Downsample back to original rate
+        oversampler->processSamplesDown(block);
+    }
+    else
+    {
+        // No oversampling - process directly
+        for (int channel = 0; channel < totalNumInputChannels; ++channel)
+        {
+            float* channelData = buffer.getWritePointer(channel);
+            int numSamples = buffer.getNumSamples();
             
-            float cleanSig = inputSample;
-            float processedSample = inputSample * drive * range;
-            
-            // Apply selected distortion at oversampled rate
-            float distorted = applyDistortion(processedSample, distortionType, drive, range);
-            
-            // Mix between distorted and clean signal
-            channelData[sample] = (distorted * clampedBlend + cleanSig * (1.f - clampedBlend)) * volume;
+            for (int sample = 0; sample < numSamples; ++sample)
+            {
+                float inputSample = channelData[sample];
+                
+                // Noise Gate processing
+                if (gateEnabled && channel < (int)gateEnvelope.size())
+                {
+                    float inputLevel = std::abs(inputSample);
+                    
+                    // Envelope follower with attack/release
+                    if (inputLevel > gateEnvelope[channel])
+                    {
+                        gateEnvelope[channel] = attackCoeff * gateEnvelope[channel] + (1.0f - attackCoeff) * inputLevel;
+                    }
+                    else
+                    {
+                        gateEnvelope[channel] = releaseCoeff * gateEnvelope[channel] + (1.0f - releaseCoeff) * inputLevel;
+                    }
+                    
+                    // Gate logic - mute if below threshold
+                    if (gateEnvelope[channel] < thresholdLinear)
+                    {
+                        inputSample = 0.0f;
+                    }
+                }
+                
+                float cleanSig = inputSample;
+                float processedSample = inputSample * drive * range;
+                
+                // Apply selected distortion
+                float distorted = applyDistortion(processedSample, distortionType, drive, range);
+                
+                // Mix between distorted and clean signal
+                channelData[sample] = (distorted * clampedBlend + cleanSig * (1.f - clampedBlend)) * volume;
+            }
         }
     }
-    
-    // Downsample back to original rate
-    oversampler->processSamplesDown(block);
     
     // Apply EQ
     juce::dsp::AudioBlock<float> eqBlock(buffer);

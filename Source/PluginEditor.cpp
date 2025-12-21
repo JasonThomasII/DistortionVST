@@ -50,6 +50,17 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     distortionTypeCombo->setColour(ComboBox::textColourId, Colours::white);
     distortionTab->addAndMakeVisible(*distortionTypeCombo);
     
+    // Oversampling Rate ComboBox
+    oversamplingRateCombo = std::make_unique<ComboBox>("Oversampling Rate");
+    oversamplingRateCombo->addItem("None (1x)", 1);
+    oversamplingRateCombo->addItem("2x", 2);
+    oversamplingRateCombo->addItem("4x", 3);
+    oversamplingRateCombo->addItem("8x", 4);
+    oversamplingRateCombo->setSelectedItemIndex(2);  // Default to 4x
+    oversamplingRateCombo->setColour(ComboBox::backgroundColourId, Colours::darkgrey);
+    oversamplingRateCombo->setColour(ComboBox::textColourId, Colours::white);
+    distortionTab->addAndMakeVisible(*oversamplingRateCombo);
+    
     //Drive Knob
     driveKnob = std::make_unique<Slider>("Drive");
     driveKnob->setSliderStyle(Slider::Rotary);
@@ -151,6 +162,9 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     // Distortion Type Attachment
     distortionTypeAttachment = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(p.getState(), "distortionType", *distortionTypeCombo);
     
+    // Oversampling Rate Attachment
+    oversamplingRateAttachment = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(p.getState(), "oversamplingRate", *oversamplingRateCombo);
+    
     // EQ Attachments
     lowGainAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "lowGain", *lowGainSlider);
     lowMidGainAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "lowMidGain", *lowMidGainSlider);
@@ -165,7 +179,7 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     gateReleaseAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "gateRelease", *gateReleaseSlider);
 
     //Canvas
-    setSize (500 , 350);
+    setSize (500, 400);
 }
 
 DistortionVSTAudioProcessorEditor::~DistortionVSTAudioProcessorEditor()
@@ -188,27 +202,30 @@ void DistortionVSTAudioProcessorEditor::resized()
     
     // === DISTORTION TAB LAYOUT ===
     // Position distortion type selector
-    distortionTypeCombo->setBounds(contentBounds.withX(20).withY(10).withWidth(200).withHeight(25));
+    distortionTypeCombo->setBounds(contentBounds.withX(20).withY(60).withWidth(200).withHeight(25));
+    
+    // Position oversampling rate selector to the right of distortion type
+    oversamplingRateCombo->setBounds(contentBounds.withX(240).withY(60).withWidth(150).withHeight(25));
     
     // Position knobs on distortion tab
-    driveKnob->setBounds(contentBounds.withX(20).withY(50).withWidth(100).withHeight(100));
-    rangeKnob->setBounds(contentBounds.withX(140).withY(50).withWidth(100).withHeight(100));
-    blendKnob->setBounds(contentBounds.withX(260).withY(50).withWidth(100).withHeight(100));
-    volumeKnob->setBounds(contentBounds.withX(80).withY(180).withWidth(100).withHeight(100));
-    reverbKnob->setBounds(contentBounds.withX(240).withY(180).withWidth(100).withHeight(100));
+    driveKnob->setBounds(contentBounds.withX(20).withY(110).withWidth(100).withHeight(100));
+    rangeKnob->setBounds(contentBounds.withX(140).withY(110).withWidth(100).withHeight(100));
+    blendKnob->setBounds(contentBounds.withX(260).withY(110).withWidth(100).withHeight(100));
+    volumeKnob->setBounds(contentBounds.withX(80).withY(240).withWidth(100).withHeight(100));
+    reverbKnob->setBounds(contentBounds.withX(240).withY(240).withWidth(100).withHeight(100));
     
     // === EQ TAB LAYOUT ===
     // Position EQ sliders on EQ tab with better spacing (taller to accommodate text boxes)
-    lowGainSlider->setBounds(contentBounds.withX(20).withY(40).withWidth(40).withHeight(120));
-    lowMidGainSlider->setBounds(contentBounds.withX(90).withY(40).withWidth(40).withHeight(120));
-    midGainSlider->setBounds(contentBounds.withX(160).withY(40).withWidth(40).withHeight(120));
-    highMidGainSlider->setBounds(contentBounds.withX(230).withY(40).withWidth(40).withHeight(120));
-    highGainSlider->setBounds(contentBounds.withX(300).withY(40).withWidth(40).withHeight(120));
+    lowGainSlider->setBounds(contentBounds.withX(20).withY(90).withWidth(40).withHeight(120));
+    lowMidGainSlider->setBounds(contentBounds.withX(90).withY(90).withWidth(40).withHeight(120));
+    midGainSlider->setBounds(contentBounds.withX(160).withY(90).withWidth(40).withHeight(120));
+    highMidGainSlider->setBounds(contentBounds.withX(230).withY(90).withWidth(40).withHeight(120));
+    highGainSlider->setBounds(contentBounds.withX(300).withY(90).withWidth(40).withHeight(120));
     
     // === NOISE GATE TAB LAYOUT ===
     // Position noise gate controls
-    gateEnabledButton->setBounds(contentBounds.withX(30).withY(60).withWidth(150).withHeight(30));
-    gateThresholdSlider->setBounds(contentBounds.withX(50).withY(120).withWidth(250).withHeight(60));
-    gateAttackSlider->setBounds(contentBounds.withX(50).withY(180).withWidth(250).withHeight(60));
-    gateReleaseSlider->setBounds(contentBounds.withX(50).withY(240).withWidth(250).withHeight(60));
+    gateEnabledButton->setBounds(contentBounds.withX(70).withY(50).withWidth(150).withHeight(30));
+    gateThresholdSlider->setBounds(contentBounds.withX(50).withY(170).withWidth(250).withHeight(60));
+    gateAttackSlider->setBounds(contentBounds.withX(50).withY(230).withWidth(250).withHeight(60));
+    gateReleaseSlider->setBounds(contentBounds.withX(50).withY(290).withWidth(250).withHeight(60));
 }

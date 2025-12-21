@@ -92,8 +92,9 @@ private:
         juce::dsp::IIR::Filter<float>   // High-shelf (16000 Hz)
     > eqChain;
     
-    // Oversampling for distortion (4x oversampling for cleaner harmonics)
+    // Oversampling for distortion (configurable rate for cleaner harmonics)
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
+    int currentOversamplingFactor = 2;  // Current oversampling factor (0, 1, 2, or 3 = 1x, 2x, 4x, 8x)
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DistortionVSTAudioProcessor)
