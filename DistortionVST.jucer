@@ -3,7 +3,7 @@
 <JUCERPROJECT id="aKis3c" name="DistortionVST" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
               cppLanguageStandard="latest" companyName="K3lloVST" pluginChannelConfigs="{1,1}, {2,2}"
-              pluginVST3Category="Distortion" pluginFormats="buildStandalone,buildVST3">
+              pluginVST3Category="Distortion" pluginFormats="buildAU,buildAUv3,buildStandalone,buildVST3">
   <MAINGROUP id="OV6PqW" name="DistortionVST">
     <GROUP id="{47929A71-46F9-DF8F-30F9-623EFF6869BF}" name="Source">
       <FILE id="AY5mQK" name="PluginProcessor.cpp" compile="1" resource="0"
@@ -20,7 +20,7 @@
     <XCODE_MAC targetFolder="Builds/MacOSX">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="DistortionVST"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="DistortionVST"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Distortion"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_plugin_client" path="/Users/jasonthomas/Documents/JUCE/modules"/>

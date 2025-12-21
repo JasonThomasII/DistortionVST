@@ -1,9 +1,11 @@
 #!/bin/bash
 # Build script for DistortionVST
-# Usage: ./build.sh [debug|release] [standalone|vst3]
+# Usage: ./build.sh [debug|release] [standalone|vst3|au|all]
 # Examples:
 #   ./build.sh debug standalone
 #   ./build.sh release vst3
+#   ./build.sh debug au
+#   ./build.sh release all
 #   ./build.sh debug  (defaults to standalone)
 
 CONFIG="${1:-debug}"
@@ -26,9 +28,20 @@ case "$TARGET" in
         SCHEME="DistortionVST - VST3"
         OUTPUT_NAME="DistortionVST.vst3"
         ;;
+    au)
+        SCHEME="DistortionVST - AU"
+        OUTPUT_NAME="Distortion.component"
+        ;;
+    all)
+        # Build all targets
+        "$0" "$1" "standalone"
+        "$0" "$1" "vst3"
+        "$0" "$1" "au"
+        exit $?
+        ;;
     *)
         echo "Error: Unknown target '$TARGET'"
-        echo "Valid targets: standalone, vst3"
+        echo "Valid targets: standalone, vst3, au, all"
         exit 1
         ;;
 esac
@@ -60,6 +73,14 @@ if [ $? -eq 0 ]; then
     PRODUCT_PATH="${PROJECT_DIR}/dist/${OUTPUT_NAME}"
     if [ -d "${PRODUCT_PATH}" ] || [ -f "${PRODUCT_PATH}" ]; then
         echo "Output: ${PRODUCT_PATH}"
+        
+        # If release mode, copy to releases directory
+        if [[ "$CONFIG" == "Release" ]]; then
+            RELEASE_DIR="${PROJECT_DIR}/releases"
+            mkdir -p "${RELEASE_DIR}"
+            cp -r "${PRODUCT_PATH}" "${RELEASE_DIR}/${OUTPUT_NAME}"
+            echo "Released: ${RELEASE_DIR}/${OUTPUT_NAME}"
+        fi
     else
         echo "Build completed but output not found at expected location"
         echo "Checking dist folder..."
