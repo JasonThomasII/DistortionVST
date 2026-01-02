@@ -52,14 +52,29 @@ DistortionVSTAudioProcessor::DistortionVSTAudioProcessor()
     
     // Oversampling Rate Parameter (0=none, 1=2x, 2=4x, 3=8x)
     state->createAndAddParameter("oversamplingRate", "Oversampling Rate", "Oversampling Rate", NormalisableRange<float>(0.0f, 3.0f, 1.0f), 2.0f, floatToString, stringToFloat);
+    
+    // IR Mix Parameter
+    state->createAndAddParameter("irMix", "IR Mix", "IR Mix", NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.0f, floatToString, stringToFloat);
 
     state->state = ValueTree("drive");
     state->state = ValueTree("range");
     state->state = ValueTree("blend");
     state->state = ValueTree("volume");
     state->state = ValueTree("reverb");
-
-
+    
+    // Initialize IR folder to Documents/DistortionVST/IRs
+    irFolder = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
+        .getChildFile("DistortionVST")
+        .getChildFile("IRs");
+    
+    // Create folder if it doesn't exist
+    if (!irFolder.exists())
+    {
+        irFolder.createDirectory();
+    }
+    
+    // Load all IRs from the folder
+    loadIRsFromFolder();
 }
 
 DistortionVSTAudioProcessor::~DistortionVSTAudioProcessor()
@@ -162,6 +177,15 @@ void DistortionVSTAudioProcessor::prepareToPlay (double sampleRate, int samplesP
         // Create oversampler with the selected factor
         oversampler = std::make_unique<juce::dsp::Oversampling<float>>(getTotalNumInputChannels(), currentOversamplingFactor, juce::dsp::Oversampling<float>::FilterType::filterHalfBandFIREquiripple);
         oversampler->initProcessing(samplesPerBlock);
+    }
+    
+    // Initialize convolver
+    if (convolver == nullptr && irBuffer.getNumSamples() > 0)
+    {
+        convolver = std::make_unique<juce::dsp::Convolution>();
+        const float* irData = irBuffer.getReadPointer(0);
+        int irSizeInBytes = currentIRLength * sizeof(float);
+        convolver->loadImpulseResponse(irData, irSizeInBytes, juce::dsp::Convolution::Stereo::no, juce::dsp::Convolution::Trim::no, currentIRLength * 2);
     }
     
     // Initialize noise gate envelopes
@@ -360,6 +384,9 @@ void DistortionVSTAudioProcessor::processBlock (AudioBuffer<float>& buffer, Midi
     juce::dsp::AudioBlock<float> eqBlock(buffer);
     eqChain.process(juce::dsp::ProcessContextReplacing<float>(eqBlock));
     
+    // Apply Impulse Response Convolution
+    processIRBuffer(buffer);
+    
 if (buffer.getNumChannels() >= 2)
     {
         reverb.processStereo(buffer.getWritePointer(0),
@@ -521,5 +548,109 @@ float DistortionVSTAudioProcessor::asymmetricDistortion(float x)
         // Negative peaks clip harder for asymmetry
         float absX = std::abs(x);
         return -(absX / (1.0f + absX * 1.5f));
+    }
+}
+void DistortionVSTAudioProcessor::loadIRsFromFolder()
+{
+    irFileList.clear();
+    currentIRIndex = -1;
+    irBuffer.setSize(1, 0);
+    convolver.reset();
+    
+    if (!irFolder.isDirectory())
+        return;
+    
+    // Get all audio files from the folder
+    auto files = irFolder.findChildFiles(juce::File::findFiles, false, "*.wav;*.mp3;*.aif;*.aiff;*.flac;*.ogg");
+    
+    for (const auto& file : files)
+    {
+        irFileList.add(file.getFullPathName());
+    }
+    
+    // Sort alphabetically
+    irFileList.sort(true);
+}
+
+void DistortionVSTAudioProcessor::selectIR(int index)
+{
+    if (index < 0 || index >= irFileList.size())
+    {
+        irBuffer.setSize(1, 0);
+        convolver.reset();
+        currentIRIndex = -1;
+        return;
+    }
+    
+    currentIRIndex = index;
+    juce::File irFile(irFileList[index]);
+    
+    if (!irFile.exists())
+        return;
+    
+    // Load the audio file using AudioFormatManager
+    juce::AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();
+    
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(irFile));
+    
+    if (reader == nullptr)
+        return;
+    
+    // Read IR into buffer
+    currentIRLength = static_cast<int>(reader->lengthInSamples);
+    irBuffer.setSize(reader->numChannels, currentIRLength);
+    reader->read(&irBuffer, 0, currentIRLength, 0, true, true);
+    
+    // Initialize convolver with IR (use first channel if stereo)
+    convolver = std::make_unique<juce::dsp::Convolution>();
+    
+    // Get raw pointer to IR data
+    const float* irData = irBuffer.getReadPointer(0);
+    int irSizeInBytes = currentIRLength * sizeof(float);
+    
+    convolver->loadImpulseResponse(irData, irSizeInBytes, juce::dsp::Convolution::Stereo::no, juce::dsp::Convolution::Trim::no, currentIRLength * 2);
+}
+
+juce::StringArray DistortionVSTAudioProcessor::getIRFileList() const
+{
+    juce::StringArray displayNames;
+    for (const auto& fullPath : irFileList)
+    {
+        juce::File file(fullPath);
+        displayNames.add(file.getFileNameWithoutExtension());
+    }
+    return displayNames;
+}
+
+void DistortionVSTAudioProcessor::processIRBuffer(juce::AudioBuffer<float>& buffer)
+{
+    if (convolver == nullptr || irBuffer.getNumSamples() == 0)
+        return;
+    
+    float irMix = *state->getRawParameterValue("irMix");
+    
+    if (irMix <= 0.0f)
+        return;  // Skip IR processing if mix is at zero
+    
+    // Create a temporary buffer for the convolved signal
+    juce::AudioBuffer<float> tempBuffer = buffer;
+    
+    // Apply convolution
+    juce::dsp::AudioBlock<float> block(tempBuffer);
+    juce::dsp::ProcessContextReplacing<float> context(block);
+    convolver->process(context);
+    
+    // Mix the convolved signal with the original
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+    {
+        float* originalData = buffer.getWritePointer(channel);
+        const float* convolvedData = tempBuffer.getReadPointer(channel);
+        int numSamples = buffer.getNumSamples();
+        
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            originalData[sample] = originalData[sample] * (1.0f - irMix) + convolvedData[sample] * irMix;
+        }
     }
 }

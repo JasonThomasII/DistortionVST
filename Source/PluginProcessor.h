@@ -72,6 +72,12 @@ public:
     float tanhDistortion(float x);
     float softKneeDistortion(float x);
     float asymmetricDistortion(float x);
+    
+    // IR loading and processing
+    void loadIRsFromFolder();
+    void selectIR(int index);
+    juce::StringArray getIRFileList() const;
+    void processIRBuffer(juce::AudioBuffer<float>& buffer);
 
 
 private:
@@ -82,6 +88,14 @@ private:
     
     // Noise Gate state (per channel)
     std::vector<float> gateEnvelope;
+    
+    // IR Convolution
+    juce::File irFolder;
+    juce::StringArray irFileList;
+    int currentIRIndex = -1;
+    juce::AudioBuffer<float> irBuffer;
+    std::unique_ptr<juce::dsp::Convolution> convolver;
+    int currentIRLength = 0;
     
     // 5-Band EQ Filters
     juce::dsp::ProcessorChain<

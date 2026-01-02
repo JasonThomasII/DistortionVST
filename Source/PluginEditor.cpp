@@ -18,6 +18,7 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     distortionTab = std::make_unique<DistortionTabComponent>();
     eqTab = std::make_unique<EQTabComponent>();
     noiseGateTab = std::make_unique<NoiseGateTabComponent>();
+    irTab = std::make_unique<IRTabComponent>();
     
     // Add reset button listener
     eqTab->resetButton.onClick = [this]()
@@ -30,11 +31,29 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
         audioProcessor.getState().getParameter("highGain")->setValueNotifyingHost(0.5f);
     };
     
+    // Populate IR dropdown at startup
+    auto irList = audioProcessor.getIRFileList();
+    for (int i = 0; i < irList.size(); ++i)
+    {
+        irTab->irCombo.addItem(irList[i], i + 1);
+    }
+    
+    // Add IR combo box listener
+    irTab->irCombo.onChange = [this]()
+    {
+        int selectedIndex = irTab->irCombo.getSelectedItemIndex();
+        if (selectedIndex >= 0)
+        {
+            audioProcessor.selectIR(selectedIndex);
+        }
+    };
+    
     // Create tabbed component
     tabbedComponent = std::make_unique<juce::TabbedComponent>(juce::TabbedButtonBar::TabsAtTop);
     tabbedComponent->addTab("Distortion", juce::Colours::darkgrey, distortionTab.get(), false);
     tabbedComponent->addTab("EQ", juce::Colours::darkgrey, eqTab.get(), false);
     tabbedComponent->addTab("Noise Gate", juce::Colours::darkgrey, noiseGateTab.get(), false);
+    tabbedComponent->addTab("IR", juce::Colours::darkgrey, irTab.get(), false);
     addAndMakeVisible(*tabbedComponent);
 
     // === DISTORTION TAB SETUP ===
@@ -151,6 +170,14 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     gateReleaseSlider->setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
     gateReleaseSlider->setRange(10.0f, 1000.0f, 1.0f);
     noiseGateTab->addAndMakeVisible(*gateReleaseSlider);
+    
+    // === IR TAB SETUP ===
+    
+    // IR Mix Slider
+    irTab->irMixSlider.setSliderStyle(Slider::LinearHorizontal);
+    irTab->irMixSlider.setTextBoxStyle(Slider::TextBoxRight, false, 60, 20);
+    irTab->irMixSlider.setRange(0.0f, 1.0f, 0.001f);
+    irTab->irMixSlider.setColour(Slider::thumbColourId, Colours::lightgrey);
 
     // Attachments
     driveAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "drive", *driveKnob);
@@ -177,6 +204,9 @@ DistortionVSTAudioProcessorEditor::DistortionVSTAudioProcessorEditor (Distortion
     gateThresholdAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "gateThreshold", *gateThresholdSlider);
     gateAttackAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "gateAttack", *gateAttackSlider);
     gateReleaseAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "gateRelease", *gateReleaseSlider);
+    
+    // IR Attachment
+    irMixAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(p.getState(), "irMix", irTab->irMixSlider);
 
     //Canvas
     setSize (500, 400);

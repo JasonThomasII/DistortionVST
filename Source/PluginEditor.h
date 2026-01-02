@@ -92,6 +92,53 @@ public:
     }
 };
 
+// Custom tab component for Impulse Response
+class IRTabComponent : public Component
+{
+public:
+    IRTabComponent() : irCombo("IR Selection"), irMixSlider("IR Mix")
+    {
+        irCombo.setColour(ComboBox::backgroundColourId, Colours::darkgrey);
+        irCombo.setColour(ComboBox::textColourId, Colours::white);
+        addAndMakeVisible(irCombo);
+        
+        irMixSlider.setColour(Slider::textBoxOutlineColourId, Colours::grey);
+        addAndMakeVisible(irMixSlider);
+    }
+    
+    void paint(Graphics& g) override
+    {
+        g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
+        g.setColour(Colours::white);
+        g.setFont(12.0f);
+        g.drawText("Impulse Response", 20, 30, 200, 25, Justification::centredLeft, false);
+        
+        // Draw folder path info
+        g.setFont(9.0f);
+        g.setColour(Colours::lightgrey);
+        g.drawText("IRs folder: ~/Documents/DistortionVST/IRs", 20, 70, 450, 20, Justification::centredLeft, false);
+        
+        // Draw dropdown label
+        g.setColour(Colours::white);
+        g.setFont(11.0f);
+        g.drawText("Select IR:", 20, 110, 100, 20, Justification::centredLeft, false);
+        
+        // Draw IR mix label
+        g.setFont(11.0f);
+        g.drawText("IR Mix", 20, 200, 100, 20, Justification::centredLeft, false);
+    }
+    
+    void resized() override
+    {
+        irCombo.setBounds(130, 105, 370, 30);
+        irMixSlider.setBounds(20, 230, 450, 60);
+    }
+    
+    ComboBox irCombo;
+    Slider irMixSlider;
+
+};
+
 //==============================================================================
 /**
 */
@@ -135,6 +182,7 @@ private:
     std::unique_ptr<DistortionTabComponent> distortionTab;
     std::unique_ptr<EQTabComponent> eqTab;
     std::unique_ptr<NoiseGateTabComponent> noiseGateTab;
+    std::unique_ptr<IRTabComponent> irTab;
     std::unique_ptr<juce::TabbedComponent> tabbedComponent;
 
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> driveAttachment;
@@ -161,6 +209,9 @@ private:
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> gateThresholdAttachment;
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> gateAttackAttachment;
     std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> gateReleaseAttachment;
+    
+    // IR Attachments
+    std::unique_ptr<AudioProcessorValueTreeState::SliderAttachment> irMixAttachment;
 
     DistortionVSTAudioProcessor& audioProcessor;
 
